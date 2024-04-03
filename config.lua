@@ -1,5 +1,7 @@
 Config = {}
 
+Config.UseAnimations = false
+
 Config.CooldownTime = 5 -- 5 minutes cooldown time for fireworks
 
 Config.BurstHeight = 32 -- 28 meters is the height that the independent fireworks blow at
