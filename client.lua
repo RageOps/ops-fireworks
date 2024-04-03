@@ -25,9 +25,11 @@ RegisterCommand('startfireworks', function(src, args)
         StartCooldown()
 
         local currCoords = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 1.0, -1.0)
-        ExecuteCommand('e mechanic4')
-        Wait(3000)
-        ExecuteCommand('e c')
+        if Config.UseAnimations then
+            ExecuteCommand('e mechanic4')
+            Wait(3000)
+            ExecuteCommand('e c')
+        end
 
         CreateSyncedFirework(currCoords, particleDict, 6, 0.1)
         Wait(4500)
