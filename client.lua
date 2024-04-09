@@ -1,6 +1,8 @@
 local particleDict = 'scr_indep_fireworks'
 local startedFireworks = false
 local fireworksLockdown = false
+local bigShowRunning = false
+
 local dicts = {
     'proj_indep_firework',
     'proj_indep_firework_v2',
@@ -8,7 +10,7 @@ local dicts = {
     'scr_rcpaparazzo1',
 }
 
--- Load all of the particle dicts
+-- [[ Load all of the particle dicts ]]
 Citizen.CreateThread(function()
     for k,v in pairs(Config.FireworkTypes) do
         RequestNamedPtfxAsset(k)
@@ -18,6 +20,8 @@ Citizen.CreateThread(function()
     end
     print('All particle dicts are loaded!')
 end)
+
+-- [[ Commands ]]
 
 RegisterCommand('startfireworks', function(src, args)
     if not startedFireworks and not fireworksLockdown then
@@ -60,6 +64,7 @@ RegisterCommand('startfireworks', function(src, args)
         end)
     end
 end)
+TriggerEvent('chat:addSuggestion', '/startfireworks', 'Start a fireworks show at your current location')
 
 -- Handler for the big show
 StartBigShow = function(currCoords)
@@ -119,8 +124,7 @@ StartBigShow = function(currCoords)
     end)
 end
 
--- Function to create firework to simplify things
-
+-- Functions to create fireworks to simplify things
 CreateSyncedFirework = function(coords, lib, num, size)
     UseParticleFxAssetNextCall(lib)
     SetParticleFxNonLoopedColour(math.random(), math.random(), math.random())
@@ -133,6 +137,7 @@ CreateFirework = function(coords, lib, num, size)
     local particle = StartParticleFxNonLoopedAtCoord(Config.FireworkTypes[lib][num], coords, 0.0, 0.0, 0.0, size, false, false, false)
 end
 
+-- Cooldown function
 StartCooldown = function()
     Citizen.CreateThread(function()
         Wait(Config.CooldownTime * 60 * 1000)
@@ -140,6 +145,7 @@ StartCooldown = function()
     end)
 end
 
+-- Helper function for randomization
 Randomize = function()
     local num = math.random(4,12)
 
@@ -152,15 +158,17 @@ Randomize = function()
     return num
 end
 
-RegisterNetEvent('ops-fireworks:client:ReceiveLockdownStatus', function(status)
-    fireworksLockdown = status
-end)
+-- [[ Net Events ]]
 
 RegisterNetEvent('ops-fireworks:client:ReceiveLockdownStatus', function(status)
     fireworksLockdown = status
 end)
 
-RegisterNetEvent('ops-fireworks:server:startBigShow', function(coordsTable)
+RegisterNetEvent('ops-fireworks:client:ReceiveLockdownStatus', function(status)
+    fireworksLockdown = status
+end)
+
+RegisterNetEvent('ops-fireworks:client:startBigShow', function(coordsTable)
     bigShowRunning = true
 
     for k,v in pairs(coordsTable) do
@@ -176,7 +184,7 @@ RegisterNetEvent('ops-fireworks:server:startBigShow', function(coordsTable)
     end
 end)
 
-RegisterNetEvent('ops-fireworks:server:addCoordToShow', function(coords)
+RegisterNetEvent('ops-fireworks:client:addCoordToShow', function(coords)
     if bigShowRunning then
         CreateFirework(coords, particleDict, 6, 0.1)
         Wait(4500)
@@ -184,9 +192,12 @@ RegisterNetEvent('ops-fireworks:server:addCoordToShow', function(coords)
     end
 end)
 
-RegisterNetEvent('ops-fireworks:server:stopBigShow', function()
+RegisterNetEvent('ops-fireworks:client:stopBigShow', function()
     bigShowRunning = false
 end)
+
+
+-- [[ Unload all particle FX once resource stops ]]
 
 AddEventHandler('onResourceStop', function()
     for k,v in pairs(Config.FireworkTypes) do
